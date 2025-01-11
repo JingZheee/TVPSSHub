@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Page</title>
+    <link rel="stylesheet" th:href="@{/resources/css/login.css}">
+</head>
+<body>
+    <div class="login-page">
+        <div class="login-container">
+            <div class="logo-section">
+                <img th:src="@{/resources/images/logo.png}" alt="Logo of Ministry of Education">
+                <h2>MINISTRY OF EDUCATION</h2>
+                <h3>Johor TVPSS</h3>
+            </div>
+            <div class="divider"></div>
+            <!-- Form Section -->
+            <div class="login-form">
+                <h2>Register</h2>
+                <form th:action="@{/user/register}" method="post">
+
+                    <!-- Full Name -->
+                    <div class="form-row">
+                        <input type="text" name="fullName" placeholder="Full Name" required>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="form-row">
+                        <input type="email" name="email" placeholder="Email Address" required>
+                    </div>
+
+                    <!-- Date of Birth -->
+                    <div class="form-row">
+                        <input type="date" name="dateOfBirth" id="dob" placeholder="Date of Birth" required>
+                    </div>
+
+                    <!-- Identity Card Number -->
+                    <div class="form-row">
+                        <input type="text" name="identityCardNumber" placeholder="Identity Card Number" required>
+                    </div>
+
+                    <!-- School -->
+                    <div class="form-row">
+                        <input type="text" name="school" id="school-input" placeholder="School" autocomplete="on" required>
+                        <ul id="school-options" class="dropdown-options">
+                            <!-- Dynamic list of schools from Thymeleaf -->
+                            <li th:each="school : ${schools}" th:text="${school.name}" class="school-option"></li>
+                        </ul>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="form-row">
+                        <input type="password" name="password" placeholder="Password" required>
+                    </div>
+
+                    <!-- Confirm Password -->
+                    <div class="form-row">
+                        <input type="password" id="checkPassword" name="checkPassword" placeholder="Confirm Password" required>
+                    </div>
+
+                    <p>
+                        Already got an account? <a th:href="@{/user/login}">Login here</a>
+                    </p>
+
+                    <button type="submit">Submit Registration</button>
+                </form>
+
+                <!-- Display Error Messages -->
+                <div th:if="${error}">
+                    <div class="error-message">
+                        <p th:text="${error}"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const dateInput = document.querySelector("input[name='dateOfBirth']");
+            dateInput.setAttribute("max", new Date().toISOString().split("T")[0]);
+            dateInput.addEventListener('focus', () => dateInput.showPicker && dateInput.showPicker());
+
+            const schoolInput = document.getElementById("school-input");
+            const schoolOptions = document.getElementById("school-options");
+
+            // Dynamic filtering for school options based on user input
+            schoolInput.addEventListener("input", (e) => {
+                const filter = e.target.value.toLowerCase();
+                const options = schoolOptions.querySelectorAll(".school-option");
+                options.forEach(option => {
+                    const schoolName = option.textContent.toLowerCase();
+                    option.style.display = schoolName.includes(filter) ? 'block' : 'none';
+                });
+            });
+
+            schoolInput.addEventListener("blur", () => {
+                setTimeout(() => schoolOptions.style.display = "none", 200);
+            });
+
+            schoolInput.addEventListener("focus", () => {
+                schoolOptions.style.display = "block";
+            });
+
+            // Handle click event for selecting a school
+            schoolOptions.addEventListener("click", function(e) {
+                if (e.target && e.target.matches("li.school-option")) {
+                    schoolInput.value = e.target.textContent; // Set input value to selected school
+                    schoolOptions.style.display = "none"; // Hide the dropdown
+                }
+            });
+        });
+    </script>
+</body>
+</html>

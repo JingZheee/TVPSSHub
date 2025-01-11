@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add New School</title>
+<script src="https://kit.fontawesome.com/af766576f4.js"
+	crossorigin="anonymous"></script>
+<link rel="stylesheet" th:href="@{/resources/css/general.css}">
+<link rel="stylesheet" th:href="@{/resources/css/activity.css}">
+<link rel="stylesheet" th:href="@{/resources/css/nav.css}">
+</head>
+<body>
+    <!-- Navbar inclusion -->
+    <div th:replace="fragments/navbar :: navbar"></div>
+
+    <div class="content">
+        <div class="header">
+            <div class="back">
+                <a href="javascript:history.back()">
+                    <i class="fa-solid fa-angle-left">Back</i>
+                </a>
+                <h2>Add New School</h2>
+            </div>
+        </div>
+
+        <div class="form-container">
+            <form method="post" th:action="@{/school/addSchool}" onsubmit="return confirmAddSchool()">
+                <!-- Hidden field for school ID -->
+                <input type="hidden" name="id" value="0" />
+                
+                <section class="info-section">
+                    <div class="form-group">
+                        <label for="name">School Name:</label>
+                        <input type="text" id="name" name="name" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="district">School District:</label>
+                        <input type="text" id="district" name="district" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="representative">School Representative:</label>
+                        <input type="text" id="representative" name="representative" required />
+                    </div>
+                </section>
+
+                <button type="submit">Add School</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function confirmAddSchool() {
+            // Display confirmation alert
+            var confirmation = confirm("Are you sure you want to add this school?");
+            // Return true if user confirmed, otherwise prevent form submission
+            return confirmation;
+        }
+    </script>
+</body>
+</html>

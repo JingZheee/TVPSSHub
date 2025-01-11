@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>School Details</title>
+<script src="https://kit.fontawesome.com/af766576f4.js"
+	crossorigin="anonymous"></script>
+<link rel="stylesheet" th:href="@{/resources/css/general.css}">
+<link rel="stylesheet" th:href="@{/resources/css/activity.css}">
+<link rel="stylesheet" th:href="@{/resources/css/nav.css}">
+</head>
+<body>
+    <!-- Navbar inclusion -->
+    <div th:replace="fragments/navbar :: navbar"></div>
+
+    <div class="content">
+        <div class="header">
+            <div class="back">
+                <a href="javascript:history.back()"><i class="fa-solid fa-angle-left">Back</i></a>
+                <h2>School Details</h2>
+            </div>
+        </div>
+
+        <div class="form-container">
+            <section class="info-section">
+                <div class="detail-group">
+                    <label>School Name:</label>
+                    <p th:text="${school.name}"></p>
+                </div>
+
+                <div class="detail-group">
+                    <label>School District:</label>
+                    <p th:text="${school.district}"></p>
+                </div>
+
+                <div class="detail-group">
+                    <label>School Representative:</label>
+                    <p th:text="${school.representative}"></p>
+                </div>
+            </section>
+        </div>
+    </div>
+</body>
+</html>
