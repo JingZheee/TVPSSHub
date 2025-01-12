@@ -11,7 +11,7 @@
         <div class="login-container">
             <div class="logo-section">
                 <img th:src="@{/resources/images/logo.png}" alt="Logo of Ministry of Education">
-                <h2>MINISTRY OF EDUCATION</h2>
+                <h2>MINISTRY OF </h2>
                 <h3>Johor TVPSS</h3>
             </div>
             <div class="divider"></div>
@@ -77,40 +77,40 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const dateInput = document.querySelector("input[name='dateOfBirth']");
-            dateInput.setAttribute("max", new Date().toISOString().split("T")[0]);
-            dateInput.addEventListener('focus', () => dateInput.showPicker && dateInput.showPicker());
-
+        document.addEventListener('DOMContentLoaded', function () {
             const schoolInput = document.getElementById("school-input");
             const schoolOptions = document.getElementById("school-options");
-
-            // Dynamic filtering for school options based on user input
+        
+            // Show dropdown when input is focused or typed into
             schoolInput.addEventListener("input", (e) => {
                 const filter = e.target.value.toLowerCase();
+                schoolOptions.style.display = "block"; // Show dropdown
                 const options = schoolOptions.querySelectorAll(".school-option");
                 options.forEach(option => {
                     const schoolName = option.textContent.toLowerCase();
                     option.style.display = schoolName.includes(filter) ? 'block' : 'none';
                 });
             });
-
-            schoolInput.addEventListener("blur", () => {
-                setTimeout(() => schoolOptions.style.display = "none", 200);
-            });
-
+        
             schoolInput.addEventListener("focus", () => {
-                schoolOptions.style.display = "block";
+                schoolOptions.style.display = "block"; // Show dropdown when input is focused
             });
-
-            // Handle click event for selecting a school
-            schoolOptions.addEventListener("click", function(e) {
-                if (e.target && e.target.matches("li.school-option")) {
-                    schoolInput.value = e.target.textContent; // Set input value to selected school
-                    schoolOptions.style.display = "none"; // Hide the dropdown
+        
+            // Hide dropdown when clicking outside
+            document.addEventListener("click", (e) => {
+                if (!schoolOptions.contains(e.target) && e.target !== schoolInput) {
+                    schoolOptions.style.display = "none";
                 }
             });
-        });
+        
+            // Select dropdown item
+            schoolOptions.addEventListener("mousedown", (e) => {
+                if (e.target && e.target.matches(".school-option")) {
+                    schoolInput.value = e.target.textContent; // Set the input value to the selected option
+                    schoolOptions.style.display = "none"; // Hide dropdown
+                }
+            });
+        });                
     </script>
 </body>
 </html>

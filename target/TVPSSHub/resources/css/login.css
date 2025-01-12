@@ -159,8 +159,9 @@ label {
     display: none;
     z-index: 1000;
     width: 100%; /* Matches input width */
-    box-sizing: border-box; /* Prevent overflow */
+    box-sizing: border-box;
 }
+
 
 /* Individual List Items */
 .dropdown-options li {
