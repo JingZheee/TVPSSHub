@@ -103,20 +103,31 @@ public class ResourceController {
                           @RequestParam("reply") String reply,
                           @RequestParam("action") String action,
                           Model model) {
-    // Get existing resource
-    Resource existingResource = resourceDAO.getResourceById(id);
-    
-    // Update fields
-    existingResource.setReply(reply);
-    existingResource.setState(action.equals("approve") ? "Approved" : "Rejected");
-    existingResource.setUpdatedDate(LocalDate.now());
-    
-    // Save updated resource
-    resourceDAO.saveResource(existingResource);
-    
-    // Refresh list and return view
-    List<Resource> resources = resourceDAO.getAllResources();
-    model.addAttribute("resources", resources);
-    return "redirect:/resource/list";
-}
+        // Get existing resource
+        Resource existingResource = resourceDAO.getResourceById(id);
+        
+        // Update fields
+        existingResource.setReply(reply);
+        existingResource.setState(action.equals("approve") ? "Approved" : "Rejected");
+        existingResource.setUpdatedDate(LocalDate.now());
+        
+        // Save updated resource
+        resourceDAO.saveResource(existingResource);
+        
+        // Refresh list and return view
+        List<Resource> resources = resourceDAO.getAllResources();
+        model.addAttribute("resources", resources);
+        return "redirect:/resource/list";
+    }
+
+   @GetMapping("/filter")
+    public String filterResources(
+        @RequestParam(required = false) String searchText,
+        @RequestParam(required = false) String state,
+        Model model) {
+        
+        List<Resource> resources = resourceDAO.getFilteredResources(searchText, state);
+        model.addAttribute("resources", resources);
+        return "resources/resourceList";
+    }
 }

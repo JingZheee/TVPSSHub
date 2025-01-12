@@ -37,15 +37,18 @@
       <div class="container">
         <!-- Functionalities Part -->
         <div class="filters">
-          <div class="input-wrapper">
-            <input type="text" placeholder="Search..." />
-          </div>
-          <select>
-            <option value="all">All</option>
-            <option value="replied">Replied</option>
-            <option value="pending">Pending</option>
-          </select>
-          <button type="button">Filter</button>
+          <form th:action="@{/resource/filter}" method="GET" style="display: flex; gap: 1rem; align-items: center;">
+            <div class="input-wrapper">
+                <input type="text" name="searchText" placeholder="Search..." style="padding: 0.5rem;" />
+            </div>
+            <select name="state" style="padding: 0.5rem;">
+                <option value="">All</option>
+                <option value="Pending">Pending</option>
+                <option value="Rejected">Rejected</option>
+                <option value="Approved">Approved</option>
+            </select>
+            <button type="submit" style="padding: 0.5rem 1rem;">Filter</button>
+        </form>
         </div>
 
         <div class="feedback-container">
