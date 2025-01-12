@@ -55,11 +55,10 @@
               >
             </button>
             <button onclick="savePage()">Generate Documentation</button>
-            <button th:if="${#authentication.name == activity.creatorEmail}">
-              <a th:href="@{/activity/editActivity/{id}(id=${activity.id})}"
-                >Edit Program</a
-              >
-            </button>
+            <button>
+              <a th:href="@{/activity/editActivity/{id}(id=${activity.id})}">Edit Program</a>
+          </button>
+          
           </div>
         </div>
       </div>
