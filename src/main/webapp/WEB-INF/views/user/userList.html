@@ -31,7 +31,7 @@
 			<h1>
 				User List for <span th:text="${schoolName}">School Name</span>
 			</h1>
-			<div th:if="${session.loggedInClient.role == 2}">
+			<div th:if="${#authentication.authorities.![authority].contains('ROLE_2')}">
 				<button>
 					<a th:href="@{/user/createUser}">Add User</a>
 				</button>
@@ -39,13 +39,34 @@
 		</div>
 
 		<!-- User List Section -->
+		<form action="#" method="get">
+			<div class="filters">
+				<div class="input-wrapper">		
+					<label for="name">Name:</label>
+					<input type="text" id="name" name="name" placeholder="Enter name" th:value="${filterName}">
+				</div>
+				
+		<div class="input-wrapper">		
+			<label for="role">Role:</label><br>
+			<select id="role" name="role">
+				<option value="">--Select Role--</option>
+				<option value="1" th:selected="${filterRole == 1}">Admin</option>
+				<option value="2" th:selected="${filterRole == 2}">Teacher</option>
+				<option value="3" th:selected="${filterRole == 3}">Student</option>
+			</select>
+		</div>
+		
+			<button type="submit">Filter</button>
+			</div>
+		</form>
+		
 		<div class="feedback-container">
 			<div th:if="${not #lists.isEmpty(userList)}">
 				<table class="feedback-table">
 					<thead>
 						<tr>
 							<th>Name</th>
-							<th>Date of Birth</th>
+							<th>Role</th>
 							<th>Email</th>
 							<th>Action</th>
 						</tr>
@@ -53,11 +74,11 @@
 					<tbody>
 						<tr th:each="user : ${userList}">
 							<td th:text="${user.fullName}">User Name</td>
-							<td th:text="${user.dateOfBirth}">Date of Birth</td>
+							<td th:text="${user.role == 1 ? 'Admin' : user.role == 2 ? 'Teacher' : user.role == 3 ? 'Student' : ''}">Role</td>
 							<td th:text="${user.email}">Email</td>
 							<td>
 								<div
-									th:if="${session.loggedInClient != null and session.loggedInClient.role == 2}">
+									th:if="${#authentication.authorities.![authority].contains('ROLE_2')}">
 									<button>
 										<a th:href="@{/user/editUser/{id}(id=${user.id})}">Edit</a>
 									</button>

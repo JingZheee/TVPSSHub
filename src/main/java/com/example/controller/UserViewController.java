@@ -184,16 +184,31 @@ public class UserViewController {
 	}
 
 	// Show user list
+	@PreAuthorize("hasRole('ROLE_2')")
 	@GetMapping("/userList")
-	public String showUserList(Model model, Authentication authentication) {
+	public String showUserList(@RequestParam(value = "name", required = false) String name,
+			@RequestParam(value = "email", required = false) String email,
+			@RequestParam(value = "role", required = false) Integer role,
+			Model model, Authentication authentication) {
 		UserViewModel user = userDAO.findUserByEmail(authentication.getName());
-		List<UserViewModel> userList = userDAO.findUsersBySchool(user.getSchool());
+		List<UserViewModel> userList;
+
+		// Apply filters
+		if (name != null || email != null || role != null) {
+			userList = userDAO.findUsersByFilter(user.getSchool(), name, email, role);
+		} else {
+			userList = userDAO.findUsersBySchool(user.getSchool());
+		}
+
 		model.addAttribute("userList", userList);
 		model.addAttribute("schoolName", user.getSchool());
+		model.addAttribute("filterName", name);
+		model.addAttribute("filterEmail", email);
+		model.addAttribute("filterRole", role);
 		return "user/userList";
 	}
 
-	@PreAuthorize("hasRole('TEACHER')")
+	@PreAuthorize("hasRole('ROLE_2')")
 	@GetMapping("/createUser")
 	public String showCreateUser(Model model, Authentication authentication) {
 		UserViewModel teacher = userDAO.findUserByEmail(authentication.getName());
@@ -203,6 +218,7 @@ public class UserViewController {
 		return "user/createUser";
 	}
 
+	@PreAuthorize("hasRole('ROLE_2')")
 	@PostMapping("/createUser")
 	public String processCreateUser(@ModelAttribute("client") UserViewModel client, Model model,
 			Authentication authentication) {
@@ -229,18 +245,21 @@ public class UserViewController {
 	}
 
 	// Show edit user form
+	@PreAuthorize("hasRole('ROLE_2')")
 	@GetMapping("/editUser/{id}")
-	public String showEditUser(@PathVariable("id") Long id, Model model, HttpSession session) {
-		UserViewModel loggedInClient = (UserViewModel) session.getAttribute("loggedInClient");
-
-		if (loggedInClient == null) {
-			model.addAttribute("error", "You must log in to edit a user.");
-			return "redirect:/user/login";
-		}
+	public String showEditUser(@PathVariable("id") Long id, Model model, Authentication authentication) {
+		// Get logged-in user using Authentication object
+		String email = authentication.getName();
+		UserViewModel loggedInClient = userDAO.findUserByEmail(email);
 
 		// Fetch the user by id
 		UserViewModel user = userDAO.findUserById(id);
 		if (user != null) {
+			// Ensure the user is part of the same school as the logged-in user
+			if (!user.getSchool().equals(loggedInClient.getSchool())) {
+				model.addAttribute("error", "You are not authorized to edit this user.");
+				return "redirect:/user/userList";
+			}
 			model.addAttribute("user", user);
 		} else {
 			model.addAttribute("error", "User not found.");
@@ -250,15 +269,13 @@ public class UserViewController {
 		return "user/editUser"; // JSP page for displaying the user edit form
 	}
 
+	@PreAuthorize("hasRole('ROLE_2')")
 	@PostMapping("/editUser/{id}")
 	public String updateUser(@PathVariable("id") Long id, @ModelAttribute("user") UserViewModel updatedUser,
-			HttpSession session, Model model) {
-		UserViewModel loggedInClient = (UserViewModel) session.getAttribute("loggedInClient");
-
-		if (loggedInClient == null) {
-			model.addAttribute("error", "You must log in to update a user.");
-			return "redirect:/user/login";
-		}
+			Authentication authentication, Model model) {
+		// Get logged-in user using Authentication object
+		String email = authentication.getName();
+		UserViewModel loggedInClient = userDAO.findUserByEmail(email);
 
 		// Ensure the updated school matches the logged-in user's school
 		updatedUser.setSchool(loggedInClient.getSchool());
@@ -270,19 +287,23 @@ public class UserViewController {
 	}
 
 	// Delete user by ID
+	@PreAuthorize("hasRole('ROLE_2')")
 	@GetMapping("/deleteUser/{id}")
-	public String deleteUser(@PathVariable("id") Long id, HttpSession session, Model model) {
-		UserViewModel loggedInClient = (UserViewModel) session.getAttribute("loggedInClient");
-
-		if (loggedInClient == null) {
-			model.addAttribute("error", "You must log in to delete a user.");
-			return "redirect:/user/login";
-		}
+	public String deleteUser(@PathVariable("id") Long id, Authentication authentication, Model model) {
+		// Get logged-in user using Authentication object
+		String email = authentication.getName();
+		UserViewModel loggedInClient = userDAO.findUserByEmail(email);
 
 		// Check if the user exists
 		UserViewModel user = userDAO.findUserById(id);
 		if (user == null) {
 			model.addAttribute("error", "User not found.");
+			return "redirect:/user/userList";
+		}
+
+		// Ensure the user belongs to the same school as the logged-in user
+		if (!user.getSchool().equals(loggedInClient.getSchool())) {
+			model.addAttribute("error", "You are not authorized to delete this user.");
 			return "redirect:/user/userList";
 		}
 
