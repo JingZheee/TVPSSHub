@@ -1,14 +1,23 @@
 package com.example.controller;
 
-import com.example.dao.ResourceDAO;
-import com.example.model.Resource;
+import java.time.LocalDate;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.List;
+import com.example.dao.ResourceDAO;
+import com.example.model.Resource;
 
 @Controller
 @RequestMapping("/resource")
@@ -21,8 +30,7 @@ public class ResourceController {
     public String listResources(Model model) {
         List<Resource> resources = resourceDAO.getAllResources();
         model.addAttribute("resources", resources);
-        return "resources/resourceList";
-    }
+        return "resources/resourceList";}
 
     @PreAuthorize("hasAnyRole('ROLE_2', 'ROLE_3')")
     @GetMapping("/addResource")
@@ -66,9 +74,34 @@ public class ResourceController {
         Resource resource = resourceDAO.getResourceById(id);
         if (resource != null) {
             model.addAttribute("resource", resource);
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if(auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_1")) && auth != null) {
+                return "resources/adminDetail";
+            }
             return "resources/resourceDetails";
         }
         return "redirect:/resource/list";
     }
 
+    @PostMapping("/replyResource")
+        public String replyResource(@RequestParam("id") int id, 
+                          @RequestParam("reply") String reply,
+                          @RequestParam("action") String action,
+                          Model model) {
+    // Get existing resource
+    Resource existingResource = resourceDAO.getResourceById(id);
+    
+    // Update fields
+    existingResource.setReply(reply);
+    existingResource.setState(action.equals("approve") ? "Approved" : "Rejected");
+    existingResource.setUpdatedDate(LocalDate.now());
+    
+    // Save updated resource
+    resourceDAO.saveResource(existingResource);
+    
+    // Refresh list and return view
+    List<Resource> resources = resourceDAO.getAllResources();
+    model.addAttribute("resources", resources);
+    return "redirect:/resource/list";
+}
 }
