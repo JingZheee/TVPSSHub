@@ -128,6 +128,52 @@ input[readonly] {
 }
 
 
+/* Dropdown List Styling */
+.dropdown-options {
+    list-style: none;
+    margin: 5rem 0;
+    padding: 0;
+    border: 1px solid #ccc;
+    max-height: 150px;
+    overflow-y: auto;
+    position: absolute;
+    background-color: #fff;
+    display: none;
+    z-index: 9999;
+    width: 50%; /* Matches input width */
+    box-sizing: border-box;
+}
+
+
+/* Individual List Items */
+.dropdown-options li {
+    padding: 10px;
+    font-size: 1rem;
+    color: #333;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+/* Hover effect for list items */
+.dropdown-options li:hover {
+    background-color: #4318FF;
+    color: white;
+}
+
+/* Focus state for dropdown list items */
+.dropdown-options li:focus {
+    outline: none;
+    background-color: #4318FF;
+    color: white;
+}
+
+/* Hide dropdown when no schools match */
+.dropdown-options li.no-match {
+    color: #aaa;
+    font-style: italic;
+}
+
+
 /* Responsive Layouts */
 
 /* For small screens (mobile devices) */

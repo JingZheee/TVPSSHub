@@ -16,35 +16,56 @@
         function confirmUpdate() {
             return confirm("Are you sure you want to edit your profile?");
         }
-        document.addEventListener('DOMContentLoaded', function() {
-            const schoolInput = document.getElementById("school-input");
-            const schoolOptions = document.getElementById("school-options");
-
-            schoolInput.addEventListener("input", function() {
-                const filter = schoolInput.value.toLowerCase();
-                const options = schoolOptions.querySelectorAll("li");
-                let visible = false;
-
-                options.forEach(option => {
-                    if (option.textContent.toLowerCase().includes(filter)) {
-                        option.style.display = "block";
-                        visible = true;
-                    } else {
-                        option.style.display = "none";
-                    }
-                });
-
-                schoolOptions.style.display = visible ? "block" : "none";
-            });
-
-            schoolInput.addEventListener("blur", () => {
-                setTimeout(() => schoolOptions.style.display = "none", 200);
-            });
-
-            schoolInput.addEventListener("focus", () => {
-                schoolOptions.style.display = "block";
-            });
-        });
+		document.addEventListener('DOMContentLoaded', function() {
+			const schoolInput = document.getElementById("school-input");
+			const hiddenSchoolInput = document.getElementById("school"); // Hidden input field
+			const schoolOptions = document.getElementById("school-options");
+		
+			schoolInput.addEventListener("input", function() {
+				const filter = schoolInput.value.toLowerCase();
+				const options = schoolOptions.querySelectorAll("li");
+				let visible = false;
+		
+				options.forEach(option => {
+					if (option.textContent.toLowerCase().includes(filter)) {
+						option.style.display = "block";
+						visible = true;
+					} else {
+						option.style.display = "none";
+					}
+				});
+		
+				schoolOptions.style.display = visible ? "block" : "none";
+			});
+		
+			schoolInput.addEventListener("blur", () => {
+				setTimeout(() => schoolOptions.style.display = "none", 200);
+			});
+		
+			schoolInput.addEventListener("focus", () => {
+				schoolOptions.style.display = "block";
+			});
+		
+			schoolOptions.addEventListener("click", function(event) {
+				if (event.target.tagName === "LI") {
+					const selectedSchool = event.target.textContent;
+		
+					// Update the visible input
+					schoolInput.value = selectedSchool;
+		
+					// Update the hidden input
+					if (hiddenSchoolInput) {
+						hiddenSchoolInput.value = selectedSchool;
+						console.log("Hidden School Input Updated:", hiddenSchoolInput.value);
+					}
+		
+					// Hide the dropdown
+					schoolOptions.style.display = "none";
+				}
+			});
+		});
+		
+		
 
     </script>
 </head>
@@ -66,7 +87,7 @@
 				<div class="profile-header">
 					<img th:src="@{/resources/images/profile-pic.png}"
 						alt="Profile Picture">
-					<h2 th:text="'Update Profile for ' + ${client.fullName}"></h2>
+					<h2 th:text="'Update Profile'"></h2>
 				</div>
 
 				<!-- Profile Information Form -->
@@ -90,12 +111,6 @@
 						</div>
 
 						<div class="input-group">
-							<label for="dateOfBirth">Date of Birth:</label> <input
-								type="text" id="dateOfBirth" name="dateOfBirth"
-								th:value="${client.dateOfBirth}" required>
-						</div>
-
-						<div class="input-group">
 							<label for="identityCardNumber">ID Number:</label> <input
 								type="text" id="identityCardNumber" name="identityCardNumber"
 								th:value="${client.identityCardNumber}" required>
@@ -103,9 +118,9 @@
 
 						<!-- School Input with Dropdown -->
 						<div class="input-group"
-							th:if="${session.loggedInClient.role != 1}">
+						th:if="${!#authentication.authorities.![authority].contains('ROLE_1')}">
 							<label for="school">School:</label> <input type="text"
-							name="school" id="school-input" placeholder="School"
+							name="school" id="school-input" th:value="${client.school}"
 							autocomplete="on" required>
 							<ul id="school-options" class="dropdown-options">
 								<!-- Dynamic list of schools from Thymeleaf -->
@@ -114,7 +129,7 @@
 							</ul>
 						</div>
 						<div class="input-group"
-							th:if="${session.loggedInClient.role == 1}">
+						th:if="${!#authentication.authorities.![authority].contains('ROLE_1')}">
 							<input type="hidden" id="school" name="school" value="None">
 						</div>
 					</div>

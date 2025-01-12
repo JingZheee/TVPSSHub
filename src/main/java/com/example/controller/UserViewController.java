@@ -69,6 +69,13 @@ public class UserViewController {
 			return "user/register";
 		}
 
+		// Check if identity card number (IC) exists
+		List<UserViewModel> usersWithIC = userDAO.findUsersByIC(client.getIdentityCardNumber());
+		if (!usersWithIC.isEmpty()) {
+			model.addAttribute("error", "Identity Card Number already exists.");
+			return "user/register";
+		}
+
 		// Save the user with encoded password
 		client.setPassword(passwordEncoder.encode(client.getPassword()));
 		client.setRole(3); // Default role as student
@@ -128,53 +135,51 @@ public class UserViewController {
 	@GetMapping("/profile")
 	public String showProfile(Model model, Authentication authentication) {
 		UserViewModel user = userDAO.findUserByEmail(authentication.getName());
+		if (user == null) {
+			model.addAttribute("error", "You must log in to view the profile.");
+			return "redirect:/user/login";
+		}
 		model.addAttribute("client", user);
 		return "user/profile";
 	}
 
 	@GetMapping("/updateProfile")
-	public String showUpdateProfile(HttpSession session, Model model) {
-		UserViewModel loggedInClient = (UserViewModel) session.getAttribute("loggedInClient");
-		if (loggedInClient == null) {
-			model.addAttribute("error", "You must log in to view the profile.");
+	public String showUpdateProfile(Model model, Authentication authentication) {
+		UserViewModel user = userDAO.findUserByEmail(authentication.getName());
+		if (user == null) {
 			return "redirect:/user/login";
 		}
 
 		List<School> schoolList = schoolDAO.getAllSchools(); // Retrieve school list from DB
-		model.addAttribute("client", loggedInClient);
+		model.addAttribute("client", user);
 		model.addAttribute("schools", schoolList); // Pass school list to the view
 		return "user/updateProfile";
 	}
 
 	@PostMapping("/updateProfile")
-	public String updateProfile(@ModelAttribute("client") UserViewModel updatedClient, HttpSession session,
+	public String updateProfile(@ModelAttribute("client") UserViewModel updatedClient, Authentication authentication,
 			Model model) {
-		UserViewModel loggedInClient = (UserViewModel) session.getAttribute("loggedInClient");
-
-		if (loggedInClient == null) {
+		UserViewModel loggedInUser = userDAO.findUserByEmail(authentication.getName());
+		if (loggedInUser == null) {
 			model.addAttribute("error", "You must log in to update your profile.");
 			return "redirect:/user/login";
 		}
 
-		// Update the loggedInClient details
-		loggedInClient.setFullName(updatedClient.getFullName());
-		loggedInClient.setEmail(updatedClient.getEmail());
-		loggedInClient.setSchool(updatedClient.getSchool());
-		loggedInClient.setDateOfBirth(updatedClient.getDateOfBirth());
-		loggedInClient.setIdentityCardNumber(updatedClient.getIdentityCardNumber());
+		// Update the logged-in user's details
+		loggedInUser.setFullName(updatedClient.getFullName());
+		loggedInUser.setEmail(updatedClient.getEmail());
+		loggedInUser.setSchool(updatedClient.getSchool());
+		loggedInUser.setIdentityCardNumber(updatedClient.getIdentityCardNumber());
 
 		String newPassword = updatedClient.getPassword();
 		if (newPassword != null && !newPassword.isEmpty()) {
-			loggedInClient.setPassword(newPassword);
+			loggedInUser.setPassword(newPassword);
 		}
 
-		// Save updated client details to the database
-		userDAO.updateUser(loggedInClient); // Ensure your DAO has an updateUser method
+		// Save updated user details to the database
+		userDAO.updateUser(loggedInUser);
 
-		// Update client in the session
-		session.setAttribute("loggedInClient", loggedInClient);
-
-		// Redirect without model data; the profile page will fetch data from session
+		// Redirect to profile page with a success message
 		return "redirect:/user/profile?message=Profile+updated+successfully";
 	}
 

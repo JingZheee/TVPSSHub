@@ -4,10 +4,8 @@ import javax.persistence.*;
 
 import org.springframework.format.annotation.DateTimeFormat;
 
-import java.time.LocalDate;
-
 @Entity
-@Table(name = "users")  // Optional, but you can specify the table name
+@Table(name = "users") // Optional, but you can specify the table name
 public class UserViewModel {
 
     @Id
@@ -25,10 +23,6 @@ public class UserViewModel {
 
     @Transient // This field will not be persisted to the database
     private String checkPassword;
-
-    @Column(name = "date_of_birth")
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-    private LocalDate dateOfBirth;
 
     private String school;
 
@@ -77,14 +71,6 @@ public class UserViewModel {
 
     public void setCheckPassword(String checkPassword) { // Setter for checkPassword
         this.checkPassword = checkPassword;
-    }
-
-    public LocalDate getDateOfBirth() {
-        return dateOfBirth;
-    }
-
-    public void setDateOfBirth(LocalDate dateOfBirth) {
-        this.dateOfBirth = dateOfBirth;
     }
 
     public String getSchool() {
