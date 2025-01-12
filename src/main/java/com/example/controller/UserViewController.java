@@ -4,19 +4,22 @@ import com.example.dao.*;
 
 import com.example.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpSession;
 import java.time.LocalDate;
 import java.util.List;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @Controller
 @RequestMapping("/user")
 public class UserViewController {
 
 	@Autowired
-	private UserDAO userDAO;  // Injecting UserDAO
+	private UserDAO userDAO; // Injecting UserDAO
 
 	@Autowired
 	private ActivityDAO programDAO;
@@ -27,18 +30,20 @@ public class UserViewController {
 	@Autowired
 	private ResourceDAO resourceDAO;
 
+	@Autowired
+	private PasswordEncoder passwordEncoder;
 
 	// Show registration form
 	@GetMapping("/register")
 	public String showRegisterForm(Model model) {
-		List<School> schools = schoolDAO.getAllSchools(); 
-	    model.addAttribute("schools", schools);
+		List<School> schools = schoolDAO.getAllSchools();
+		model.addAttribute("schools", schools);
 		model.addAttribute("client", new UserViewModel());
 		return "user/register";
 	}
 
 	@PostMapping("/register")
-	public String processRegisterForm(@ModelAttribute("client") UserViewModel client, Model model, HttpSession session) {
+	public String processRegisterForm(@ModelAttribute("client") UserViewModel client, Model model) {
 		// Validation checks
 		if (client.getFullName() == null || client.getFullName().isEmpty()) {
 			model.addAttribute("error", "Full Name is required.");
@@ -52,11 +57,6 @@ public class UserViewController {
 			model.addAttribute("error", "Password must be at least 6 characters.");
 			return "user/register";
 		}
-		
-		if (client.getIdentityCardNumber() == null || client.getIdentityCardNumber().isEmpty()) {
-			model.addAttribute("error", "Identity Card Number is required.");
-			return "user/register";
-		}
 		if (!client.getPassword().equals(client.getCheckPassword())) {
 			model.addAttribute("error", "Password and Confirm Password must match.");
 			return "user/register";
@@ -68,33 +68,19 @@ public class UserViewController {
 			model.addAttribute("error", "Email already exists.");
 			return "user/register";
 		}
-		// Check if Identity Card Number exists
-	    List<UserViewModel> usersWithSameIdCard = userDAO.findUsersByIC(client.getIdentityCardNumber());
-	    if (!usersWithSameIdCard.isEmpty()) {
-	        model.addAttribute("error", "An account with this Identity Card Number already exists. Please use a different one.");
-	        return "user/register";
-	    }
 
-	    // Save the user
-	    client.setRole(3); // Default role as student
-	    System.out.println("Calling saveUser in UserDAO...");
-	    try {
-	        userDAO.saveUser(client);
-	    } catch (Exception e) {
-	        if (e.getMessage().contains("ConstraintViolationException") || e.getMessage().contains("Duplicate entry")) {
-	            model.addAttribute("error", "An account with the same email or Identity Card Number already exists.");
-	            return "user/register";
-	        }
-	        model.addAttribute("error", "An unexpected error occurred. Please try again.");
-	        e.printStackTrace();
-	        return "user/register";
-	    }
+		// Save the user with encoded password
+		client.setPassword(passwordEncoder.encode(client.getPassword()));
+		client.setRole(3); // Default role as student
+		try {
+			userDAO.saveUser(client);
+		} catch (Exception e) {
+			model.addAttribute("error", "An unexpected error occurred. Please try again.");
+			e.printStackTrace();
+			return "user/register";
+		}
 
-		// Set session attribute
-		session.setAttribute("loggedInClient", client);
-
-		// Redirect to the dashboard
-		return "redirect:/user/dashboard";
+		return "redirect:/user/login?registered=true";
 	}
 
 	// Show login form
@@ -103,76 +89,66 @@ public class UserViewController {
 		return "user/login";
 	}
 
-	// Process the login form
-	@PostMapping("/login")
-	public String processLoginForm(@RequestParam("email") String email, @RequestParam("password") String password, HttpSession session, Model model) {
-		UserViewModel user = userDAO.findUserByEmail(email);
-		if (user == null || !user.getPassword().equals(password)) {
-			model.addAttribute("error", "Invalid credentials.");
-			return "user/login";
-		}
-		session.setAttribute("loggedInClient", user);
-		return "redirect:/user/dashboard";
-	}
-	
 	@GetMapping("/dashboard")
-	public String showDashboard(HttpSession session, Model model) {
-	    UserViewModel loggedInClient = (UserViewModel) session.getAttribute("loggedInClient");
-	    if (loggedInClient == null) {
-	        return "redirect:/user/login";
-	    }
+	public String showDashboard(Model model, Authentication authentication) {
+		try {
+			// Add debug logging
+			System.out.println("Authentication object: " + authentication);
+			System.out.println("Authentication name: " + authentication.getName());
+			System.out.println("Authentication authorities: " + authentication.getAuthorities());
 
-	    // Fetch all programs, schools, and resources
-	    List<ActivityViewModel> programs = programDAO.getAllActivities();
-	    List<School> schools = schoolDAO.getAllSchools();
-	    List<Resource> resources = resourceDAO.getAllResources();
+			UserViewModel user = userDAO.findUserByEmail(authentication.getName());
+			if (user == null) {
+				System.out.println("User not found in database");
+				return "redirect:/user/login";
+			}
 
-	    // Log the data to check if it is fetched correctly
-	    System.out.println("Programs: " + programs);
-	    System.out.println("Schools: " + schools);
-	    System.out.println("Resources: " + resources);
+			System.out.println("Found user: " + user.getEmail() + " with role: " + user.getRole());
 
-	    // Add data to the model
-	    model.addAttribute("client", loggedInClient);
-	    model.addAttribute("programs", programs);
-	    model.addAttribute("schools", schools);
-	    model.addAttribute("resources", resources);
+			// Load all required data
+			List<ActivityViewModel> programs = programDAO.getAllActivities();
+			List<School> schools = schoolDAO.getAllSchools();
+			List<Resource> resources = resourceDAO.getAllResources();
 
-	    return "user/dashboard";
+			// Add to model
+			model.addAttribute("client", user);
+			model.addAttribute("programs", programs);
+			model.addAttribute("schools", schools);
+			model.addAttribute("resources", resources);
+
+			return "user/dashboard";
+		} catch (Exception e) {
+			System.out.println("Error in dashboard: " + e.getMessage());
+			e.printStackTrace();
+			return "redirect:/user/login?error=true";
+		}
 	}
-
 
 	// Show profile
 	@GetMapping("/profile")
-	public String showProfile(HttpSession session, Model model) {
+	public String showProfile(Model model, Authentication authentication) {
+		UserViewModel user = userDAO.findUserByEmail(authentication.getName());
+		model.addAttribute("client", user);
+		return "user/profile";
+	}
+
+	@GetMapping("/updateProfile")
+	public String showUpdateProfile(HttpSession session, Model model) {
 		UserViewModel loggedInClient = (UserViewModel) session.getAttribute("loggedInClient");
 		if (loggedInClient == null) {
 			model.addAttribute("error", "You must log in to view the profile.");
 			return "redirect:/user/login";
 		}
 
-		// Ensure updated data is added to the model
+		List<School> schoolList = schoolDAO.getAllSchools(); // Retrieve school list from DB
 		model.addAttribute("client", loggedInClient);
-		return "user/profile";
+		model.addAttribute("schools", schoolList); // Pass school list to the view
+		return "user/updateProfile";
 	}
-
-	@GetMapping("/updateProfile")
-	public String showUpdateProfile(HttpSession session, Model model) {
-	    UserViewModel loggedInClient = (UserViewModel) session.getAttribute("loggedInClient");
-	    if (loggedInClient == null) {
-	        model.addAttribute("error", "You must log in to view the profile.");
-	        return "redirect:/user/login";
-	    }
-
-	    List<School> schoolList = schoolDAO.getAllSchools(); // Retrieve school list from DB
-	    model.addAttribute("client", loggedInClient);
-	    model.addAttribute("schools", schoolList); // Pass school list to the view
-	    return "user/updateProfile";
-	}
-
 
 	@PostMapping("/updateProfile")
-	public String updateProfile(@ModelAttribute("client") UserViewModel updatedClient, HttpSession session, Model model) {
+	public String updateProfile(@ModelAttribute("client") UserViewModel updatedClient, HttpSession session,
+			Model model) {
 		UserViewModel loggedInClient = (UserViewModel) session.getAttribute("loggedInClient");
 
 		if (loggedInClient == null) {
@@ -193,7 +169,7 @@ public class UserViewController {
 		}
 
 		// Save updated client details to the database
-		userDAO.updateUser(loggedInClient);  // Ensure your DAO has an updateUser method
+		userDAO.updateUser(loggedInClient); // Ensure your DAO has an updateUser method
 
 		// Update client in the session
 		session.setAttribute("loggedInClient", loggedInClient);
@@ -204,89 +180,48 @@ public class UserViewController {
 
 	// Show user list
 	@GetMapping("/userList")
-	public String showUserList(Model model, HttpSession session) {
-		UserViewModel loggedInClient = (UserViewModel) session.getAttribute("loggedInClient");
-
-		if (loggedInClient == null) {
-			model.addAttribute("error", "You must log in to view the user list.");
-			return "redirect:/user/login";
-		}
-
-		String schoolName = loggedInClient.getSchool(); // Get the school name from the session
-		System.out.println("School Name from session: " + schoolName); // Debug log
-
-		List<UserViewModel> userList = userDAO.findUsersBySchool(schoolName); // Retrieve users for that school
-		System.out.println("Users found: " + userList.size()); // Debug log
-
+	public String showUserList(Model model, Authentication authentication) {
+		UserViewModel user = userDAO.findUserByEmail(authentication.getName());
+		List<UserViewModel> userList = userDAO.findUsersBySchool(user.getSchool());
 		model.addAttribute("userList", userList);
-		model.addAttribute("schoolName", schoolName);
-
+		model.addAttribute("schoolName", user.getSchool());
 		return "user/userList";
 	}
 
+	@PreAuthorize("hasRole('TEACHER')")
 	@GetMapping("/createUser")
-	public String showCreateUser(Model model, HttpSession session) {
-	    UserViewModel loggedInClient = (UserViewModel) session.getAttribute("loggedInClient");
-
-	    if (loggedInClient == null) {
-	        model.addAttribute("error", "You must log in to create a user.");
-	        return "redirect:/user/login";
-	    }
-
-	    // Check if the logged-in user has permission
-	    if (loggedInClient.getRole() != 2) {  // Assuming role 2 is for admin
-	        model.addAttribute("error", "You do not have permission to create a user.");
-	        return "redirect:/user/dashboard";
-	    }
-
-	    // Create a new user with the same school as the logged-in client
-	    UserViewModel newUser = new UserViewModel();
-	    newUser.setSchool(loggedInClient.getSchool()); // Pre-fill the school
-	    model.addAttribute("client", newUser);
-
-	    return "user/createUser";
+	public String showCreateUser(Model model, Authentication authentication) {
+		UserViewModel teacher = userDAO.findUserByEmail(authentication.getName());
+		UserViewModel newUser = new UserViewModel();
+		newUser.setSchool(teacher.getSchool());
+		model.addAttribute("client", newUser);
+		return "user/createUser";
 	}
-	
+
 	@PostMapping("/createUser")
-	public String processCreateUser(@ModelAttribute("client") UserViewModel client, Model model, HttpSession session) {
-	    UserViewModel loggedInClient = (UserViewModel) session.getAttribute("loggedInClient");
+	public String processCreateUser(@ModelAttribute("client") UserViewModel client, Model model,
+			Authentication authentication) {
+		UserViewModel teacher = userDAO.findUserByEmail(authentication.getName());
 
-	    if (loggedInClient == null) {
-	        model.addAttribute("error", "You must log in to create a user.");
-	        return "redirect:/user/login";
-	    }
+		// Validate school matches teacher's school
+		if (!client.getSchool().equals(teacher.getSchool())) {
+			model.addAttribute("error", "The user's school must match your school.");
+			return "user/createUser";
+		}
 
-	    if (loggedInClient.getRole() != 2) {
-	        model.addAttribute("error", "You do not have permission to create a user.");
-	        return "redirect:/user/dashboard";
-	    }
-	    // Check if email already exists
-	    UserViewModel existingUserByEmail = userDAO.findUserByEmail(client.getEmail());
-	    if (existingUserByEmail != null) {
-	        model.addAttribute("error", "The email is already in use. Please use a different email.");
-	        return "user/createUser";
-	    }
+		// Check if email exists
+		if (userDAO.findUserByEmail(client.getEmail()) != null) {
+			model.addAttribute("error", "Email already exists.");
+			return "user/createUser";
+		}
 
-		// Check if Identity Card Number exists
-	    List<UserViewModel> usersWithSameIdCard = userDAO.findUsersByIC(client.getIdentityCardNumber());
-	    if (!usersWithSameIdCard.isEmpty()) {
-	        model.addAttribute("error", "An account with this Identity Card Number already exists. Please use a different one.");
-	        return "user/createUser";
-	    }
+		// Save new user
+		client.setPassword(passwordEncoder.encode(client.getPassword()));
+		client.setRole(3); // Default role as student
+		userDAO.saveUser(client);
 
-	    // Validate that the school matches the logged-in client's school
-	    if (!client.getSchool().equals(loggedInClient.getSchool())) {
-	        model.addAttribute("error", "The user's school must match your school.");
-	        return "user/createUser";
-	    }
-
-	    // Save the user
-	    client.setRole(3); // Default role as student
-	    userDAO.saveUser(client);
-
-	    return "redirect:/user/userList";
+		return "redirect:/user/userList";
 	}
-
 
 	// Show edit user form
 	@GetMapping("/editUser/{id}")
@@ -309,24 +244,25 @@ public class UserViewController {
 
 		return "user/editUser"; // JSP page for displaying the user edit form
 	}
+
 	@PostMapping("/editUser/{id}")
-	public String updateUser(@PathVariable("id") Long id, @ModelAttribute("user") UserViewModel updatedUser, HttpSession session, Model model) {
-	    UserViewModel loggedInClient = (UserViewModel) session.getAttribute("loggedInClient");
+	public String updateUser(@PathVariable("id") Long id, @ModelAttribute("user") UserViewModel updatedUser,
+			HttpSession session, Model model) {
+		UserViewModel loggedInClient = (UserViewModel) session.getAttribute("loggedInClient");
 
-	    if (loggedInClient == null) {
-	        model.addAttribute("error", "You must log in to update a user.");
-	        return "redirect:/user/login";
-	    }
+		if (loggedInClient == null) {
+			model.addAttribute("error", "You must log in to update a user.");
+			return "redirect:/user/login";
+		}
 
-	    // Ensure the updated school matches the logged-in user's school
-	    updatedUser.setSchool(loggedInClient.getSchool());
+		// Ensure the updated school matches the logged-in user's school
+		updatedUser.setSchool(loggedInClient.getSchool());
 
-	    // Save the user
-	    userDAO.updateUser(updatedUser);
+		// Save the user
+		userDAO.updateUser(updatedUser);
 
-	    return "redirect:/user/userList"; // Redirect back to the user list page after update
+		return "redirect:/user/userList"; // Redirect back to the user list page after update
 	}
-
 
 	// Delete user by ID
 	@GetMapping("/deleteUser/{id}")
@@ -353,17 +289,11 @@ public class UserViewController {
 		return "redirect:/user/userList";
 	}
 
-
-
 	// Logout function
 	@GetMapping("/logout")
-	public String logout(HttpSession session) {
-		// Invalidate the session to log out the user
-		session.invalidate();
-
-		// Redirect to the login page after logout
+	public String logout() {
+		// Spring Security handles the actual logout
 		return "redirect:/user/login";
 	}
-
 
 }

@@ -1,6 +1,7 @@
 com\example\model\UserViewModel.class
 com\example\model\ActivityViewModel.class
 com\example\dao\ResourceDAO.class
+com\example\config\SecurityConfig.class
 com\example\controller\UserViewController.class
 com\example\dao\FeedbackDAO.class
 com\example\dao\SchoolDAO.class

@@ -2,18 +2,19 @@ package com.example.controller;
 
 import com.example.dao.ActivityDAO;
 import com.example.dao.FeedbackDAO;
+import com.example.dao.UserDAO;
 
 import com.example.model.ActivityViewModel;
 import com.example.model.UserViewModel;
 import com.example.model.Feedback;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpSession;
 import java.util.List;
-import java.util.ArrayList;
 import java.time.LocalDate;
 
 @Controller
@@ -22,50 +23,42 @@ public class ActivityController {
 
     @Autowired
     private ActivityDAO activityDAO;
-    
+
     @Autowired
     private FeedbackDAO feedbackDAO;
 
-    // Show activity list
-    @GetMapping("/activityList")
-    public String showActivityList(HttpSession session, Model model) {
-        UserViewModel loggedInClient = (UserViewModel) session.getAttribute("loggedInClient");
-        if (loggedInClient == null) {
-            model.addAttribute("error", "You must be logged in to view activities.");
-            return "redirect:/user/login";
-        }
+    @Autowired
+    private UserDAO userDAO;
 
+    // Show activity list - Everyone can access
+    @GetMapping("/activityList")
+    public String showActivityList(Model model) {
         List<ActivityViewModel> activities = activityDAO.getAllActivities();
         model.addAttribute("activities", activities);
-
         return "activity/activityList";
     }
 
-    // Show form to add an activity
+    // Add Activity - Only Teachers can add
+    @PreAuthorize("hasRole('ROLE_2')")
     @GetMapping("/addActivity")
     public String showAddActivityForm(Model model) {
         model.addAttribute("activity", new ActivityViewModel());
         return "activity/addActivity";
     }
 
-    // Process the add activity form
+    @PreAuthorize("hasRole('ROLE_2')")
     @PostMapping("/addActivity")
-    public String processAddActivityForm(@ModelAttribute("activity") ActivityViewModel activity, HttpSession session, Model model) {
-        UserViewModel loggedInClient = (UserViewModel) session.getAttribute("loggedInClient");
-        if (loggedInClient == null) {
-            model.addAttribute("error", "You must be logged in to add an activity.");
-            return "redirect:/user/login";
-        }
+    public String processAddActivityForm(@ModelAttribute("activity") ActivityViewModel activity,
+            Authentication authentication) {
+        // Get current user's ID from authentication
+        UserViewModel currentUser = userDAO.findUserByEmail(authentication.getName());
+        activity.setCreatorId(currentUser.getId());
 
-        // Set the creatorId to the logged-in user's ID
-        activity.setCreatorId(loggedInClient.getId());
-        
         activityDAO.saveActivity(activity);
-        model.addAttribute("message", "Activity added successfully.");
         return "redirect:/activity/activityList";
     }
 
-    // Show activity details
+    // View Activity Details - Everyone can access
     @GetMapping("/activityDetails/{id}")
     public String showActivityDetails(@PathVariable("id") int id, Model model) {
         ActivityViewModel activity = activityDAO.findActivityById(id);
@@ -77,10 +70,12 @@ public class ActivityController {
         return "activity/activityDetails";
     }
 
+    // Edit Activity - Only Teachers who created the activity
+    @PreAuthorize("hasRole('ROLE_2')")
     @GetMapping("/editActivity/{id}")
-    public String showEditActivityForm(@PathVariable("id") int id, HttpSession session, Model model) {
+    public String showEditActivityForm(@PathVariable("id") int id, Authentication authentication, Model model) {
         ActivityViewModel activity = activityDAO.findActivityById(id);
-        UserViewModel loggedInClient = (UserViewModel) session.getAttribute("loggedInClient");
+        UserViewModel currentUser = userDAO.findUserByEmail(authentication.getName());
 
         if (activity == null) {
             model.addAttribute("error", "Activity not found.");
@@ -88,7 +83,7 @@ public class ActivityController {
         }
 
         // Check if the logged-in user is the creator
-        if (activity.getCreatorId() != loggedInClient.getId()) {
+        if (activity.getCreatorId() != currentUser.getId()) {
             model.addAttribute("error", "You are not authorized to edit this activity.");
             return "redirect:/activity/activityList";
         }
@@ -97,12 +92,17 @@ public class ActivityController {
         return "activity/editActivity";
     }
 
-
-    // Process the edit activity form
+    @PreAuthorize("hasRole('ROLE_2')")
     @PostMapping("/editActivity/{id}")
-    public String processEditActivityForm(@PathVariable("id") int id, @ModelAttribute("activity") ActivityViewModel updatedActivity, Model model) {
+    public String processEditActivityForm(@PathVariable("id") int id,
+            @ModelAttribute("activity") ActivityViewModel updatedActivity,
+            Authentication authentication,
+            Model model) {
         ActivityViewModel existingActivity = activityDAO.findActivityById(id);
-        if (existingActivity != null) {
+        UserViewModel currentUser = userDAO.findUserByEmail(authentication.getName());
+
+        if (existingActivity != null && existingActivity.getCreatorId() == currentUser.getId()) {
+            // Update activity fields
             existingActivity.setTitle(updatedActivity.getTitle());
             existingActivity.setOrganizer(updatedActivity.getOrganizer());
             existingActivity.setStatus(updatedActivity.getStatus());
@@ -117,92 +117,68 @@ public class ActivityController {
             existingActivity.setParticipantsSecondary(updatedActivity.getParticipantsSecondary());
             existingActivity.setParticipantsOpen(updatedActivity.getParticipantsOpen());
 
-
             activityDAO.updateActivity(existingActivity);
             model.addAttribute("message", "Activity updated successfully.");
-        } else {
-            model.addAttribute("error", "Activity not found.");
-            return "activity/editActivity";
         }
-
         return "redirect:/activity/activityDetails/" + id;
     }
 
+    // Filter Activities - Everyone can access
     @GetMapping("/filterActivities")
     public String filterActivities(@RequestParam(value = "searchKeyword", required = false) String searchKeyword,
-                                    @RequestParam(value = "location", required = false) String location,
-                                    Model model) {
-        // Logic to handle filtering activities
+            @RequestParam(value = "location", required = false) String location,
+            Model model) {
         List<ActivityViewModel> activities = activityDAO.getFilteredActivities(searchKeyword, location);
-
         model.addAttribute("activities", activities);
         return "activity/activityList";
     }
-    
+
+    // Show Feedback - Only Teachers and Admin can view
+    @PreAuthorize("hasAnyRole('ROLE_1', 'ROLE_2')")
     @GetMapping("/showFeedback/{id}")
     public String showFeedback(@PathVariable("id") int activityId, Model model) {
-        // Fetch the feedback list for the given activityId
         List<Feedback> feedbackList = feedbackDAO.getFeedbackByActivityId(activityId);
-
-        System.out.println("Fetched feedback list size: " + (feedbackList != null ? feedbackList.size() : 0));
-
-        // Add feedbackList to the model
         model.addAttribute("feedbackList", feedbackList);
-
-        // Add a message if feedbackList is empty
         if (feedbackList == null || feedbackList.isEmpty()) {
             model.addAttribute("noFeedbackMessage", "No feedback available for this activity.");
         }
-
         return "activity/showFeedback";
     }
-    
-    
 
-    
+    // Add Feedback - Only Admin can add feedback
+    @PreAuthorize("hasRole('ROLE_1')")
     @GetMapping("/addFeedback")
-    public String showAddFeedback(@RequestParam("activityId") int activityId, HttpSession session, Model model) {
-        // Retrieve the logged-in user from the session
-        UserViewModel loggedInClient = (UserViewModel) session.getAttribute("loggedInClient");
-        if (loggedInClient == null) {
-            model.addAttribute("error", "You must be logged in to add feedback.");
-            return "redirect:/user/login";
-        }
-
-        // Fetch the activity using the provided activityId
+    public String showAddFeedback(@RequestParam("activityId") int activityId, Model model) {
         ActivityViewModel activity = activityDAO.findActivityById(activityId);
         if (activity == null) {
             throw new IllegalArgumentException("Activity not found for ID: " + activityId);
         }
 
-        // Add necessary data to the model
         model.addAttribute("activity", activity);
-        model.addAttribute("user", loggedInClient); // Add the logged-in user to the model
-        model.addAttribute("currentDate", LocalDate.now()); // Pass current date to the model
-
+        model.addAttribute("currentDate", LocalDate.now());
         return "activity/addFeedback";
     }
 
+    @PreAuthorize("hasRole('ROLE_1')")
     @PostMapping("/addFeedback")
     public String addFeedback(@RequestParam("activityId") int activityId,
-                              @RequestParam("feedbackText") String feedbackText,
-                              @RequestParam(value = "rating", required = false) Integer rating,
-                              @RequestParam("userId") int userId,
-                              @RequestParam("date") String date) {
-        
+            @RequestParam("feedbackText") String feedbackText,
+            @RequestParam(value = "rating", required = false) Integer rating,
+            Authentication authentication,
+            @RequestParam("date") String date) {
+
+        UserViewModel currentUser = userDAO.findUserByEmail(authentication.getName());
         LocalDate parsedDate = LocalDate.parse(date);
-        
+
         Feedback feedback = new Feedback();
         feedback.setActivityId(activityId);
         feedback.setFeedbackText(feedbackText);
         feedback.setRating(rating);
-        feedback.setUserId(userId);
+        feedback.setUserId(currentUser.getId().intValue());
         feedback.setDate(parsedDate);
 
         feedbackDAO.save(feedback);
-
         return "redirect:/activity/activityDetails/" + activityId;
     }
-
 
 }
