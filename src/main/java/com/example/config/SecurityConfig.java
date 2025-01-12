@@ -77,7 +77,7 @@ public class SecurityConfig {
             return User.builder()
                     .username(user.getEmail())
                     .password(user.getPassword())
-                    .authorities("ROLE_" + user.getRole())
+                    .authorities("ROLE_" + user.getRole(), "SCHOOL_" + user.getSchoolId())
                     .build();
         };
     }
