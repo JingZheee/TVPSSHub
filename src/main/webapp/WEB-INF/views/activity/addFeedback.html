@@ -45,12 +45,8 @@
 					</select>
 				</div>
 				<input type="hidden" name="activityId" th:value="${activity.id}" />
-				<input type="hidden" name="userId" th:value="${user.id}" /> 
-				<input
-					type="hidden" name="date" th:value="${currentDate}" /> 
-									<div>
-					<button type="submit">Submit Feedback</button>
-				</div>
+				<input type="hidden" name="date" th:value="${currentDate}" /> 
+				<button type="submit">Submit Feedback</button>
 			</form>
 		</div>
 	</div>
