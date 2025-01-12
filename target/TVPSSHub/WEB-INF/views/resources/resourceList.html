@@ -66,11 +66,17 @@
                 <td th:text="${resource.state}"></td>
                 <td th:text="${resource.updatedDate}"></td>
                 <td>
-                  <a th:href="@{/resource/editResource/{id}(id=${resource.id})}" th:if="${#authentication.authorities.![authority].contains('ROLE_2') or #authentication.authorities.![authority].contains('ROLE_3')}"
+                  <a th:href="@{/resource/editResource/{id}(id=${resource.id})}" 
+                  th:if="${(#authentication.authorities.![authority].contains('ROLE_2') or 
+                  #authentication.authorities.![authority].contains('ROLE_3')) and 
+                  resource.state != 'Approved'}"
                     >Edit | </a
                   >
                   <a
-                    th:href="@{/resource/deleteResource/{id}(id=${resource.id})}" th:if="${#authentication.authorities.![authority].contains('ROLE_2') or #authentication.authorities.![authority].contains('ROLE_3')}"
+                    th:href="@{/resource/deleteResource/{id}(id=${resource.id})}"
+                    th:if="${(#authentication.authorities.![authority].contains('ROLE_2') or 
+                             #authentication.authorities.![authority].contains('ROLE_3')) and 
+                             resource.state != 'Approved'}"
                     th:onclick="|return confirm('Are you sure?')|"
                     >Delete | </a
                   >

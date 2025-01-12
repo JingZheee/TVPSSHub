@@ -41,11 +41,13 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="state">State:</label>
-                        <input type="text" id="state" name="state" th:value="${resource.state}" required />
-
                         <label for="updatedDate">Updated Date:</label>
                         <input type="date" id="updatedDate" name="updatedDate" th:value="${resource.updatedDate}" required />
+                        
+                        <div th:if="${resource.reply != null && !resource.reply.empty}">
+                            <label for="reply">Reply:</label>
+                            <p>${resource.reply}</p>
+                        </div>
                     </div>
                 </section>
 

@@ -17,7 +17,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.example.dao.ResourceDAO;
+import com.example.dao.UserDAO;
 import com.example.model.Resource;
+import com.example.model.UserViewModel;
 
 @Controller
 @RequestMapping("/resource")
@@ -25,6 +27,9 @@ public class ResourceController {
 
     @Autowired
     private ResourceDAO resourceDAO;
+
+	@Autowired
+	private UserDAO userDAO; 
 
     @GetMapping("/list")
     public String listResources(Model model) {
@@ -42,6 +47,16 @@ public class ResourceController {
     @PreAuthorize("hasAnyRole('ROLE_2', 'ROLE_3')")
     @PostMapping("/addResource")
     public String addResource(@ModelAttribute("resource") Resource resource) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    String userEmail = auth.getName();
+    
+    // Get user's school
+    UserViewModel user = userDAO.getUserByEmail(userEmail);
+    
+    // Set school in resource
+    resource.setSchool(user.getSchool());
+    resource.setUpdatedDate(LocalDate.now());
+    resource.setState("Pending");
         resourceDAO.saveResource(resource);
         return "redirect:/resource/list";
     }

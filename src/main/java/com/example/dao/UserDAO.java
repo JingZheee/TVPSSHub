@@ -1,12 +1,15 @@
 package com.example.dao;
 
-import com.example.model.UserViewModel;
+import java.util.List;
+
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 import org.springframework.stereotype.Repository;
+
+import com.example.model.UserViewModel;
+
 import bdUtil.HibernateCF;
-import java.util.*;
 
 @Repository
 public class UserDAO {
@@ -135,4 +138,17 @@ public class UserDAO {
         }
     }
 
+    public UserViewModel getUserByEmail(String email) {
+        Session session = HibernateCF.getSessionFactory().openSession();
+        try {
+            Query<UserViewModel> query = session.createQuery(
+                "FROM UserViewModel WHERE email = :email", 
+                UserViewModel.class
+            );
+            query.setParameter("email", email);
+            return query.uniqueResult();
+        } finally {
+            session.close();
+        }
+    }
 }
