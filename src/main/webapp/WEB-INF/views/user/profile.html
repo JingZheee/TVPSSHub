@@ -41,16 +41,12 @@
 						<div th:text="${client.email}"></div>
 					</div>
 					<div class="info-item">
-						<label>Date of Birth:</label>
-						<div th:text="${client.dateOfBirth}"></div>
-					</div>
-					<div class="info-item">
 						<label>Identity Card Number:</label>
 						<div th:text="${client.identityCardNumber}"></div>
 					</div>
 
 					<!-- Conditional Display of School -->
-					<div class="info-item" th:if="${session.loggedInClient.role != 1}">
+					<div class="info-item" th:if="${!#authentication.authorities.![authority].contains('ROLE_1')}">
 						<label>School:</label>
 						<div th:text="${client.school}"></div>
 					</div>

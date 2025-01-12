@@ -50,15 +50,9 @@
 							type="password" id="checkPassword" name="checkPassword"
 							th:value="${user.password}" required>
 					</div>
-					<div class="form-group">
-						<label for="dateOfBirth">Date of Birth:</label> <input type="date"
-							id="dateOfBirth" name="dateOfBirth"
-							th:value="${user.dateOfBirth}" required>
-					</div>
-					<div class="form-group">
+					<div class="form-group" th:if="${#authentication.authorities.![authority].contains('ROLE_2')}">
 						<label for="school">School:</label> <input type="text" id="school"
-							name="school" th:value="${session.loggedInClient.school}"
-							readonly required>
+							name="school" th:value="${user.school}" readonly required>
 					</div>
 					<div class="form-group">
 						<label for="identityCardNumber">Identity Card Number:</label> <input

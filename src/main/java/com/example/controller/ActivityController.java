@@ -74,6 +74,8 @@ public class ActivityController {
     @PreAuthorize("hasRole('ROLE_2')")
     @GetMapping("/editActivity/{id}")
     public String showEditActivityForm(@PathVariable("id") int id, Authentication authentication, Model model) {
+        System.out.println("Principal: " + authentication.getPrincipal());
+
         ActivityViewModel activity = activityDAO.findActivityById(id);
         UserViewModel currentUser = userDAO.findUserByEmail(authentication.getName());
 
