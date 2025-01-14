@@ -50,7 +50,6 @@
 			<label for="role">Role:</label><br>
 			<select id="role" name="role">
 				<option value="">--Select Role--</option>
-				<option value="1" th:selected="${filterRole == 1}">Admin</option>
 				<option value="2" th:selected="${filterRole == 2}">Teacher</option>
 				<option value="3" th:selected="${filterRole == 3}">Student</option>
 			</select>
@@ -93,19 +92,29 @@
 
 				<!-- Pagination -->
 				<div class="pagination">
+					<!-- Previous Button -->
 					<div th:if="${currentPage > 1}">
-						<button
-							th:onclick="'window.location.href=\'?page=' + (${currentPage} - 1) + '\''">Previous</button>
+						<button th:onclick="'window.location.href=\'?page=' + (${currentPage} - 1) + '\''">
+							Previous
+						</button>
 					</div>
+				
+					<!-- Page Numbers -->
 					<button th:each="page : ${#numbers.sequence(1, totalPages)}"
-						th:classappend="${page == currentPage} ? 'active'"
-						th:onclick="'window.location.href=\'?page=' + page + '\''"
-						th:text="${page}">1</button>
+							th:classappend="${page == currentPage} ? 'active'"
+							th:onclick="'window.location.href=\'?page=' + (${currentPage}+1) + '\''"
+							th:text="${page}">1
+					</button>
+				
+					<!-- Next Button -->
 					<div th:if="${currentPage < totalPages}">
-						<button
-							th:onclick="'window.location.href=\'?page=' + (${currentPage} + 1) + '\''">Next</button>
+						<button th:onclick="'window.location.href=\'?page=' + (${currentPage} + 1) + '\''">
+							Next
+						</button>
 					</div>
 				</div>
+				
+				
 			</div>
 
 			<!-- No Users Found -->

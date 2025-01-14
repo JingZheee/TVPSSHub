@@ -10,6 +10,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpSession;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -189,22 +190,47 @@ public class UserViewController {
 	public String showUserList(@RequestParam(value = "name", required = false) String name,
 			@RequestParam(value = "email", required = false) String email,
 			@RequestParam(value = "role", required = false) Integer role,
+			@RequestParam(value = "page", defaultValue = "1") int currentPage,
 			Model model, Authentication authentication) {
-		UserViewModel user = userDAO.findUserByEmail(authentication.getName());
-		List<UserViewModel> userList;
 
-		// Apply filters
+		// Get the current user's school
+		UserViewModel user = userDAO.findUserByEmail(authentication.getName());
+
+		// Apply filters based on user input
+		List<UserViewModel> userList;
 		if (name != null || email != null || role != null) {
 			userList = userDAO.findUsersByFilter(user.getSchool(), name, email, role);
 		} else {
 			userList = userDAO.findUsersBySchool(user.getSchool());
 		}
 
-		model.addAttribute("userList", userList);
+		// Pagination logic
+		int pageSize = 10; // Number of users per page
+		int totalItems = userList.size();
+		int totalPages = (int) Math.ceil((double) totalItems / pageSize);
+
+		// Validate current page
+		if (currentPage < 1)
+			currentPage = 1;
+		if (currentPage > totalPages)
+			currentPage = totalPages > 0 ? totalPages : 1;
+
+		// Calculate the start and end indices for pagination
+		int start = (currentPage - 1) * pageSize;
+		int end = Math.min(start + pageSize, totalItems);
+
+		// Ensure the list isn't empty before sublisting
+		List<UserViewModel> paginatedUserList = totalItems > 0 ? userList.subList(start, end) : new ArrayList<>();
+
+		// Add attributes to the model for view rendering
+		model.addAttribute("userList", paginatedUserList);
 		model.addAttribute("schoolName", user.getSchool());
 		model.addAttribute("filterName", name);
 		model.addAttribute("filterEmail", email);
 		model.addAttribute("filterRole", role);
+		model.addAttribute("currentPage", currentPage);
+		model.addAttribute("totalPages", totalPages);
+
 		return "user/userList";
 	}
 
