@@ -1,3 +1,4 @@
+com\example\security\CustomUserDetails.class
 com\example\model\UserViewModel.class
 com\example\model\ActivityViewModel.class
 com\example\dao\ResourceDAO.class
