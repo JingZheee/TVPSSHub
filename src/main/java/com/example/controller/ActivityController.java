@@ -47,7 +47,6 @@ public class ActivityController {
         return "activity/addActivity";
     }
 
-    @PreAuthorize("hasRole('ROLE_2')")
     @PostMapping("/addActivity")
     public String processAddActivityForm(@ModelAttribute("activity") ActivityViewModel activity,
             Authentication authentication) {
@@ -95,7 +94,6 @@ public class ActivityController {
         return "activity/editActivity";
     }
 
-    @PreAuthorize("hasRole('ROLE_2')")
     @PostMapping("/editActivity/{id}")
     public String processEditActivityForm(@PathVariable("id") int id,
             @ModelAttribute("activity") ActivityViewModel updatedActivity,
@@ -193,7 +191,6 @@ public class ActivityController {
         return "activity/addFeedback";
     }
 
-    @PreAuthorize("hasRole('ROLE_1')")
     @PostMapping("/addFeedback")
     public String addFeedback(@RequestParam("activityId") int activityId,
             @RequestParam("feedbackText") String feedbackText,
