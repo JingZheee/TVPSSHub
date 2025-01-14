@@ -14,6 +14,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.time.LocalDate;
 
@@ -138,12 +139,43 @@ public class ActivityController {
     // Show Feedback - Only Teachers and Admin can view
     @PreAuthorize("hasAnyRole('ROLE_1', 'ROLE_2')")
     @GetMapping("/showFeedback/{id}")
-    public String showFeedback(@PathVariable("id") int activityId, Model model) {
+    public String showFeedback(@PathVariable("id") int activityId,
+            @RequestParam(name = "page", defaultValue = "1") int currentPage,
+            Model model) {
+
+        // Fetch feedback for the activity from the DAO
         List<Feedback> feedbackList = feedbackDAO.getFeedbackByActivityId(activityId);
-        model.addAttribute("feedbackList", feedbackList);
+
+        // Handle the case where there are no feedbacks
         if (feedbackList == null || feedbackList.isEmpty()) {
+            model.addAttribute("feedbackList", new ArrayList<>()); // Empty list
+            model.addAttribute("currentPage", 1);
+            model.addAttribute("totalPages", 1); // No pages if no feedback
             model.addAttribute("noFeedbackMessage", "No feedback available for this activity.");
+            return "activity/showFeedback";
         }
+
+        int pageSize = 10; // Items per page
+        int totalItems = feedbackList.size();
+        int totalPages = (int) Math.ceil((double) totalItems / pageSize);
+
+        if (currentPage < 1)
+            currentPage = 1;
+        if (currentPage > totalPages)
+            currentPage = totalPages;
+
+        int start = (currentPage - 1) * pageSize;
+        int end = Math.min(start + pageSize, totalItems);
+
+        // Paginate feedback
+        List<Feedback> paginatedFeedback = feedbackList.subList(start, end);
+
+        // Add attributes to the model for pagination
+        model.addAttribute("feedbackList", paginatedFeedback);
+        model.addAttribute("currentPage", currentPage);
+        model.addAttribute("totalPages", totalPages);
+        model.addAttribute("activityId", activityId); // Pass activityId for pagination links
+
         return "activity/showFeedback";
     }
 
