@@ -43,6 +43,7 @@ public class SecurityConfig {
                         .antMatchers("/activity/addActivity", "/activity/editActivity/**").hasRole("2") // Teachers only
                         .antMatchers("/activity/addFeedback/**").hasRole("1") // Admin only
                         .antMatchers("/activity/showFeedback/**").hasAnyRole("1", "2") // Admin and Teachers
+                        .antMatchers("/resource/**").hasAnyRole("1", "2", "3")
                         .anyRequest().authenticated())
                 .formLogin(form -> form
                         .loginPage("/user/login")
@@ -77,7 +78,7 @@ public class SecurityConfig {
             return User.builder()
                     .username(user.getEmail())
                     .password(user.getPassword())
-                    .authorities("ROLE_" + user.getRole())
+                    .authorities("ROLE_" + user.getRole(), "SCHOOL_" + user.getSchoolId())
                     .build();
         };
     }

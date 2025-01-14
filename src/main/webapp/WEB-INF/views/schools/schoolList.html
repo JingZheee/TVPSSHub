@@ -39,7 +39,7 @@
           th:if="${#authentication.authorities.![authority].contains('ROLE_2')}"
         >
           <button>
-            <a href="#">My School</a>
+            <a th:href="@{/school/viewDetails/1}">My School</a>
           </button>
         </div>
 
@@ -108,19 +108,6 @@
                       title="Delete School"
                     >
                       <i class="fa-solid fa-trash"></i>
-                    </a>
-                  </div>
-
-                  <!-- Teacher Actions -->
-                  <div
-                    th:if="${#authentication.authorities.![authority].contains('ROLE_2')}"
-                    style="display: inline"
-                  >
-                    <a
-                      th:href="@{/school/teacher/schoolDetail?name=${school.name}}"
-                      title="Teacher View"
-                    >
-                      <i class="fa-solid fa-chalkboard-user"></i>
                     </a>
                   </div>
                 </td>

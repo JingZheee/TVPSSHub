@@ -29,6 +29,9 @@ public class UserViewModel {
     @Column(name = "identity_card_number", nullable = false, unique = true)
     private String identityCardNumber;
 
+    @Column(name = "school_id", nullable = true) // Set nullable to true
+    private Long schoolId;
+
     private int role; // 1: admin, 2: teacher, 3: student
 
     // Constructors, Getters, and Setters
@@ -95,5 +98,13 @@ public class UserViewModel {
 
     public void setRole(int role) {
         this.role = role;
+    }
+
+    public Long getSchoolId() {
+        return schoolId;
+    }
+
+    public void setSchoolId(Long schoolId) {
+        this.schoolId = schoolId;
     }
 }

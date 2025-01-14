@@ -1,13 +1,15 @@
 package com.example.dao;
 
-import com.example.model.Resource;
-import bdUtil.HibernateCF;
+import java.util.List;
+
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.query.Query;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import com.example.model.Resource;
+
+import bdUtil.HibernateCF;
 
 @Repository
 public class ResourceDAO {
@@ -78,4 +80,35 @@ public class ResourceDAO {
             session.close();
         }
     }
+
+    public List<Resource> getFilteredResources(String searchText, String state) {
+    Session session = HibernateCF.getSessionFactory().openSession();
+    try {
+        StringBuilder hql = new StringBuilder("FROM Resource WHERE 1=1");
+        
+        if (searchText != null && !searchText.trim().isEmpty()) {
+            hql.append(" AND (LOWER(request) LIKE :search " +
+                      "OR LOWER(description) LIKE :search " +
+                      "OR LOWER(school) LIKE :search)");
+        }
+        
+        if (state != null && !state.trim().isEmpty()) {
+            hql.append(" AND state = :state");
+        }
+        
+        Query<Resource> query = session.createQuery(hql.toString(), Resource.class);
+        
+        if (searchText != null && !searchText.trim().isEmpty()) {
+            query.setParameter("search", "%" + searchText.toLowerCase() + "%");
+        }
+        
+        if (state != null && !state.trim().isEmpty()) {
+            query.setParameter("state", state);
+        }
+        
+        return query.list();
+    } finally {
+        session.close();
+    }
+}
 }
