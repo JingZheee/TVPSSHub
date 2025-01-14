@@ -40,12 +40,35 @@
 						</tr>
 					</tbody>
 				</table>
+		
+				<!-- Pagination -->
+				<div class="pagination">
+					<!-- Previous Page Button -->
+					<span th:if="${currentPage > 1}">
+						<button><a th:href="@{/activity/showFeedback/{id}(id=${activityId}, page=${currentPage-1})}">&laquo; Previous</a></button>
+					</span>
+				
+					<!-- Page Number Buttons -->
+					<span th:each="i : ${#numbers.sequence(1, totalPages)}">
+						<button><a th:href="@{/activity/showFeedback/{id}(id=${activityId}, page=${i})}"
+						   th:text="${i}"
+						   th:class="${i == currentPage ? 'active' : ''}"></a></button>
+					</span>
+				
+					<!-- Next Page Button -->
+					<span th:if="${currentPage < totalPages}">
+						<button><a th:href="@{/activity/showFeedback/{id}(id=${activityId}, page=${currentPage+1})}">Next &raquo;</a></button>
+					</span>
+				</div>
+				
+				
 			</div>
-
+		
 			<div th:if="${feedbackList.isEmpty()}">
-				<p>No feedback available.</p>
+				<p th:text="${noFeedbackMessage}"></p>
 			</div>
 		</div>
+		
 
 	</div>
 </body>
