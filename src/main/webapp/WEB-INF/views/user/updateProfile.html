@@ -124,7 +124,7 @@
 							</ul>
 						</div>
 						<div class="input-group"
-						th:if="${!#authentication.authorities.![authority].contains('ROLE_1')}">
+						th:if="${#authentication.authorities.![authority].contains('ROLE_1')}">
 							<input type="hidden" id="school" name="school" value="None">
 						</div>
 					</div>
