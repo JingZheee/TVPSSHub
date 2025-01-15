@@ -37,18 +37,27 @@
       <div class="container">
         <!-- Functionalities Part -->
         <div class="filters">
-          <form th:action="@{/resource/filter}" method="GET" style="display: flex; gap: 1rem; align-items: center;">
+          <form
+            th:action="@{/resource/filter}"
+            method="GET"
+            style="display: flex; gap: 1rem; align-items: center"
+          >
             <div class="input-wrapper">
-                <input type="text" name="searchText" placeholder="Search..." style="padding: 0.5rem;" />
+              <input
+                type="text"
+                name="searchText"
+                placeholder="Search..."
+                style="padding: 0.5rem"
+              />
             </div>
-            <select name="state" style="padding: 0.5rem;">
-                <option value="">All</option>
-                <option value="Pending">Pending</option>
-                <option value="Rejected">Rejected</option>
-                <option value="Approved">Approved</option>
+            <select name="state" style="padding: 0.5rem">
+              <option value="">All</option>
+              <option value="Pending">Pending</option>
+              <option value="Rejected">Rejected</option>
+              <option value="Approved">Approved</option>
             </select>
-            <button type="submit" style="padding: 0.5rem 1rem;">Filter</button>
-        </form>
+            <button type="submit" style="padding: 0.5rem 1rem">Filter</button>
+          </form>
         </div>
 
         <div class="feedback-container">
@@ -69,20 +78,23 @@
                 <td th:text="${resource.state}"></td>
                 <td th:text="${resource.updatedDate}"></td>
                 <td>
-                  <a th:href="@{/resource/editResource/{id}(id=${resource.id})}" 
-                  th:if="${(#authentication.authorities.![authority].contains('ROLE_2') or 
+                  <a
+                    th:href="@{/resource/editResource/{id}(id=${resource.id})}"
+                    th:if="${(#authentication.authorities.![authority].contains('ROLE_2') or 
                   #authentication.authorities.![authority].contains('ROLE_3')) and 
-                  resource.state != 'Approved'}"
-                    >Edit | </a
-                  >
+                  resource.state != 'Approved' and 
+                  resource.school == userSchool}"
+                    >Edit |
+                  </a>
                   <a
                     th:href="@{/resource/deleteResource/{id}(id=${resource.id})}"
                     th:if="${(#authentication.authorities.![authority].contains('ROLE_2') or 
                              #authentication.authorities.![authority].contains('ROLE_3')) and 
-                             resource.state != 'Approved'}"
+                             resource.state != 'Approved' and 
+                             resource.school == userSchool}"
                     th:onclick="|return confirm('Are you sure?')|"
-                    >Delete | </a
-                  >
+                    >Delete |
+                  </a>
                   <a th:href="@{/resource/viewDetails/{id}(id=${resource.id})}"
                     >View Details</a
                   >
