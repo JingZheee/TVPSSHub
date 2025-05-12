@@ -47,7 +47,8 @@
 
           <!-- Teacher buttons -->
           <div
-            th:if="${#authentication.authorities.![authority].contains('ROLE_2')}"
+            th:if="${#authentication.authorities.![authority].contains('ROLE_2') 
+            and activity.creatorId == #authentication.principal.id}"
           >
             <button>
               <a th:href="@{/activity/showFeedback/{id}(id=${activity.id})}"
@@ -56,9 +57,10 @@
             </button>
             <button onclick="savePage()">Generate Documentation</button>
             <button>
-              <a th:href="@{/activity/editActivity/{id}(id=${activity.id})}">Edit Program</a>
-          </button>
-          
+              <a th:href="@{/activity/editActivity/{id}(id=${activity.id})}"
+                >Edit Program</a
+              >
+            </button>
           </div>
         </div>
       </div>

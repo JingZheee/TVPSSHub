@@ -9,15 +9,17 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import java.util.Arrays;
 
 import com.example.dao.UserDAO;
 import com.example.model.UserViewModel;
+import com.example.security.CustomUserDetails;
 
 @Configuration
 @EnableWebSecurity
@@ -73,13 +75,12 @@ public class SecurityConfig {
                 throw new UsernameNotFoundException("User not found");
             }
 
-            System.out.println("Loading user: " + user.getEmail() + " with role: " + user.getRole());
-
-            return User.builder()
-                    .username(user.getEmail())
-                    .password(user.getPassword())
-                    .authorities("ROLE_" + user.getRole(), "SCHOOL_" + user.getSchoolId())
-                    .build();
+            return new CustomUserDetails(
+                    user.getId(),
+                    user.getSchoolId(),
+                    user.getEmail(),
+                    user.getPassword(),
+                    Arrays.asList(new SimpleGrantedAuthority("ROLE_" + user.getRole())));
         };
     }
 

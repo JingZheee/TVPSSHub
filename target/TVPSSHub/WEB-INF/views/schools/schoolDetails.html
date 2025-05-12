@@ -30,9 +30,13 @@
           <div class="school-header">
             <h1 th:text="${school.name}"></h1>
             <div
-              th:if="${#authentication.authorities.![authority].contains('ROLE_2')}"
+              th:if="${#authentication.authorities.![authority].contains('ROLE_2') 
+                        and #authentication.principal.schoolId == school.id}"
             >
-              <a th:href="@{/school/editSchool/1}" class="edit-icon">
+              <a
+                th:href="@{/school/editSchool/{id}(id=${school.id})}"
+                class="edit-icon"
+              >
                 <i class="fas fa-pencil-alt"></i>
               </a>
             </div>

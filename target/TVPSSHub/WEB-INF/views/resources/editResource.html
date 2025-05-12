@@ -44,11 +44,10 @@
                         <label for="updatedDate">Updated Date:</label>
                         <input type="date" id="updatedDate" name="updatedDate" th:value="${resource.updatedDate}" required />
                         
-                        <div th:if="${resource.reply != null && !resource.reply.empty}">
-                            <label for="reply">Reply:</label>
-                            <p>${resource.reply}</p>
-                        </div>
                     </div>
+                    <input type="hidden" id="state" name="state" th:value="${resource.state}" />
+                    <input type="hidden" id="reply" name="reply" th:value="${resource.reply}" />
+                    <input type="hidden" id="school" name="school" th:value="${resource.school}" />
                 </section>
 
                 <button type="submit">Update Resource</button>

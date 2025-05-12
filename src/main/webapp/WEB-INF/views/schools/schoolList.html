@@ -36,10 +36,14 @@
 
         <!-- Display button for Teacher -->
         <div
-          th:if="${#authentication.authorities.![authority].contains('ROLE_2')}"
+          th:if="${#authentication.authorities.![authority].contains('ROLE_2') 
+            or #authentication.authorities.![authority].contains('ROLE_3')}"
         >
           <button>
-            <a th:href="@{/school/viewDetails/1}">My School</a>
+            <a
+              th:href="@{/school/viewDetails/{id}(id=${#authentication.principal.schoolId})}"
+              >My School</a
+            >
           </button>
         </div>
 
