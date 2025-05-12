@@ -33,9 +33,22 @@ public class ResourceController {
 
     @GetMapping("/list")
     public String listResources(Model model) {
+        // Get current authenticated user
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String userEmail = auth.getName();
+        
+        // Get user's school
+        UserViewModel user = userDAO.getUserByEmail(userEmail);
+        
+        // Get resources
         List<Resource> resources = resourceDAO.getAllResources();
+        
+        // Add both resources and user's school to model
         model.addAttribute("resources", resources);
-        return "resources/resourceList";}
+        model.addAttribute("userSchool", user.getSchool());
+        
+        return "resources/resourceList";
+    }
 
     @PreAuthorize("hasAnyRole('ROLE_2', 'ROLE_3')")
     @GetMapping("/addResource")
